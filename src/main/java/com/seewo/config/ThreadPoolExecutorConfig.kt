@@ -2,10 +2,7 @@ package com.seewo.config
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import java.util.concurrent.Executor
-import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.ThreadPoolExecutor
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -23,10 +20,10 @@ open class ThreadPoolExecutorConfig {
     open fun taskExecutor(): Executor {
         val tag = AtomicInteger(0)
         return ThreadPoolExecutor(5,
-            10,
-            60L,
-            TimeUnit.SECONDS,
-            LinkedBlockingQueue()
+                10,
+                60L,
+                TimeUnit.SECONDS,
+                LinkedBlockingQueue()
         ) { runnable ->
             val thread = Thread(runnable)
             thread.name = "demoExecutor-thread-${tag.getAndIncrement()}"
@@ -44,10 +41,10 @@ open class ThreadPoolExecutorConfig {
 
         Thread().start()
         return ThreadPoolExecutor(5,
-            10,
-            60L,
-            TimeUnit.SECONDS,
-            LinkedBlockingQueue(200)
+                10,
+                60L,
+                TimeUnit.SECONDS,
+                LinkedBlockingQueue(200)
         ) { runnable ->
             val thread = Thread(runnable)
             thread.name = "boundExecutor-thread-${tag.getAndIncrement()}"
@@ -62,14 +59,18 @@ open class ThreadPoolExecutorConfig {
     @Bean("callerRunExecutor")
     open fun callerRunExecutor(): Executor {
         val tag = AtomicInteger(0)
-        return ThreadPoolExecutor(5,
-            10,
-            60L,
-            TimeUnit.SECONDS,
-            LinkedBlockingQueue(200), { runnable ->
+
+        val executor = ThreadPoolExecutor(5,
+                10,
+                60L,
+                TimeUnit.SECONDS,
+                LinkedBlockingQueue(200))
+        { runnable ->
             val thread = Thread(runnable)
-            thread.name = "test-thread-${tag.getAndIncrement()}"
+            thread.name = "boundExecutor-thread-${tag.getAndIncrement()}"
             thread
-        },ThreadPoolExecutor.CallerRunsPolicy())
+        }
+        executor.rejectedExecutionHandler = ThreadPoolExecutor.CallerRunsPolicy()
+        return executor
     }
 }
